@@ -6,6 +6,10 @@ html, body {
     word-wrap: break-word;
 }
 
+div {
+    display: block;
+}
+
 .title {
     font-size: 35px;
     text-align: center;
