@@ -2,6 +2,7 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:html';
+import 'dart:math';
 
 num lastFrame = 0.0; // Time count for animation deltas
 final int fps = 60; // Frames per second
@@ -12,15 +13,46 @@ List<Animatable> animatables = [];
 
 /// Main entry point
 void main() {
-  querySelector('#output').text = 'Memorandum';
-  //print(linearTween(0, 60, fps, 1.0));
+  //querySelector('#output').text = 'Memorandum';
+  //print(Tween.sinusoidal(0, 60, fps, 1.0));
 
-  Window win1 = new Window(querySelector('#test1'), 10, 10, 10, 10, 30, 30, 80, 80);
-  Window win2 = new Window(querySelector('#test2'), 60, 10, 10, 10, 30, 30, 80, 80);
-  Window win3 = new Window(querySelector('#test3'), 10, 60, 10, 10, 30, 30, 80, 80);
-  Window win4 = new Window(querySelector('#test4'), 60, 60, 10, 10, 30, 30, 80, 80);
+  DivElement container = querySelector('#container');
+  reshape(container, 1.5);
+  window.onResize.listen((Event event) {
+    reshape(container, 1.5);
+  });
+
+  int smallPnt = 5;
+  int largePnt = 55;
+  int initDim = 40;
+  int finalDim = 90;
+
+  Window win1 =
+      new Window(querySelector('#topleft'), smallPnt, smallPnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
+  Window win2 =
+      new Window(querySelector('#topright'), largePnt, smallPnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
+  Window win3 =
+      new Window(querySelector('#bottomleft'), smallPnt, largePnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
+  Window win4 =
+      new Window(querySelector('#bottomright'), largePnt, largePnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
 
   window.animationFrame.then(loop);
+}
+
+void reshape(DivElement container, double aspect) {
+  /*if(window.innerWidth < window.innerHeight) {
+    int width = (window.innerHeight * aspect).floor();
+    container.style.width = '${width}px';
+    container.style.height = '${window.innerHeight}px';
+  }
+  else {
+    int height = (window.innerWidth / aspect).floor();
+    container.style.width = '${window.innerWidth}px';
+    container.style.height = '${height}px';
+  }*/
+  int dim = min(window.innerWidth, window.innerHeight);
+  container.style.width = '${dim}px';
+  container.style.height = '${dim}px';
 }
 
 /// Recursive loop for animation
@@ -33,8 +65,7 @@ void loop(num delta) {
     toRemove.forEach((animatable) {
       animatables.remove(animatable);
       animatable.inMotion = false;
-      if(!animatable.closed)
-        animatable.win.style.zIndex = '0';
+      if (!animatable.closed) animatable.win.style.zIndex = '0';
     });
     toRemove.clear();
   }
@@ -86,6 +117,8 @@ class Window extends Animatable {
   List<double> animationsHeight = [];
   bool closed;
 
+  double dur = 0.6;
+
   Window(DivElement div, initX, initY, finalX, finalY, initWidth, initHeight,
       finalWidth, finalHeight) {
     this.win = div;
@@ -108,6 +141,7 @@ class Window extends Animatable {
     this.closed = false;
     this.inMotion = false;
 
+    win.style.position = 'absolute';
     win.onClick.listen((MouseEvent event) {
       if (!inMotion) toggle();
     });
@@ -118,16 +152,15 @@ class Window extends Animatable {
     inMotion = true;
     if (closed) {
       win.style.zIndex = '1';
-      animationsX = linearTween(initX, finalX, fps, 1.0);
-      animationsY = linearTween(initY, finalY, fps, 1.0);
-      animationsWidth = linearTween(initWidth, finalWidth, fps, 1.0);
-      animationsHeight = linearTween(initHeight, finalHeight, fps, 1.0);
+      animationsX = Tween.sinusoidal(initX, finalX, fps, dur);
+      animationsY = Tween.sinusoidal(initY, finalY, fps, dur);
+      animationsWidth = Tween.sinusoidal(initWidth, finalWidth, fps, dur);
+      animationsHeight = Tween.sinusoidal(initHeight, finalHeight, fps, dur);
     } else {
-
-      animationsX = linearTween(finalX, initX, fps, 1.0);
-      animationsY = linearTween(finalY, initY, fps, 1.0);
-      animationsWidth = linearTween(finalWidth, initWidth, fps, 1.0);
-      animationsHeight = linearTween(finalHeight, initHeight, fps, 1.0);
+      animationsX = Tween.sinusoidal(finalX, initX, fps, dur);
+      animationsY = Tween.sinusoidal(finalY, initY, fps, dur);
+      animationsWidth = Tween.sinusoidal(finalWidth, initWidth, fps, dur);
+      animationsHeight = Tween.sinusoidal(finalHeight, initHeight, fps, dur);
     }
     animatables.add(this);
   }
@@ -155,26 +188,29 @@ class Window extends Animatable {
   }
 }
 
-List<double> linearTween(int initVal, int finalVal, int fps, double dur) {
-  List<double> animation = [];
-  int delta = finalVal - initVal;
-  int frames = (fps * dur).round();
-  double interval = delta.toDouble() / frames.toDouble();
-  for (int i = 1; i < frames; i++) {
-    animation.add(initVal + i * interval);
+class Tween {
+  static List<double> linear(int initVal, int finalVal, int fps, double dur) {
+    List<double> animation = [];
+    int delta = finalVal - initVal;
+    int frames = (fps * dur).round();
+    double interval = delta.toDouble() / frames.toDouble();
+    for (int i = 1; i < frames; i++) {
+      animation.add(initVal + i * interval);
+    }
+    animation.add(finalVal.toDouble());
+    return animation;
   }
-  animation.add(finalVal.toDouble());
-  return animation;
-}
 
-List<double> sinTween(int initVal, int finalVal, int fps, double dur) {
-  List<double> animation = [];
-  int delta = finalVal - initVal;
-  int frames = (fps * dur).round();
-  double interval = delta.toDouble() / frames.toDouble();
-  for (int i = 1; i < frames; i++) {
-    animation.add(initVal + i * interval);
+  static List<double> sinusoidal(int initVal, int finalVal, int fps, double dur) {
+    List<double> animation = [];
+    int delta = finalVal - initVal;
+    int frames = (fps * dur).round();
+    double interval = delta.toDouble() / frames.toDouble();
+    for (int i = 1; i < frames; i++) {
+      double sindex = (i / frames) * (PI / 2);
+      animation.add(initVal + delta * pow(sin(sindex), 4));
+    }
+    animation.add(finalVal.toDouble());
+    return animation;
   }
-  animation.add(finalVal.toDouble());
-  return animation;
 }
