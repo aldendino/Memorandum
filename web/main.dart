@@ -27,14 +27,27 @@ void main() {
   int initDim = 40;
   int finalDim = 90;
 
-  Window win1 =
-      new Window(querySelector('#topleft'), smallPnt, smallPnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
-  Window win2 =
-      new Window(querySelector('#topright'), largePnt, smallPnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
-  Window win3 =
-      new Window(querySelector('#bottomleft'), smallPnt, largePnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
-  Window win4 =
-      new Window(querySelector('#bottomright'), largePnt, largePnt, smallPnt, smallPnt, initDim, initDim, finalDim, finalDim);
+  DivElement tl = querySelector('#topleft');
+  DivElement tr = querySelector('#topright');
+  DivElement bl = querySelector('#bottomleft');
+  DivElement br = querySelector('#bottomright');
+
+  Window win1 = new Window(tl, tl, smallPnt, smallPnt, smallPnt, smallPnt,
+      initDim, initDim, finalDim, finalDim, '%');
+  Window win2 = new Window(tr, tr, largePnt, smallPnt, smallPnt, smallPnt,
+      initDim, initDim, finalDim, finalDim, '%');
+  Window win3 = new Window(bl, bl, smallPnt, largePnt, smallPnt, smallPnt,
+      initDim, initDim, finalDim, finalDim, '%');
+  Window win4 = new Window(br, br, largePnt, largePnt, smallPnt, smallPnt,
+      initDim, initDim, finalDim, finalDim, '%');
+
+  DivElement menuElem = querySelector('#menu');
+  DivElement menuButton = querySelector('#menuButton');
+  print(menuButton.style.width);
+  int menuWidth = 81;
+  int menuHeight = 50;
+  Window menu =
+      new Window(menuElem, menuButton, -100, 50, 0, 50, menuWidth, menuHeight, menuWidth, menuHeight, 'px');
 
   window.animationFrame.then(loop);
 }
@@ -116,11 +129,12 @@ class Window extends Animatable {
   List<double> animationsWidth = [];
   List<double> animationsHeight = [];
   bool closed;
+  String valueType;
 
   double dur = 0.6;
 
-  Window(DivElement div, initX, initY, finalX, finalY, initWidth, initHeight,
-      finalWidth, finalHeight) {
+  Window(DivElement div, Element button, initX, initY, finalX, finalY,
+      initWidth, initHeight, finalWidth, finalHeight, String valueType) {
     this.win = div;
 
     this.initX = initX;
@@ -133,16 +147,18 @@ class Window extends Animatable {
     this.finalWidth = finalWidth;
     this.finalHeight = finalHeight;
 
-    win.style.left = '${initX}%';
-    win.style.top = '${initY}%';
-    win.style.width = '${initWidth}%';
-    win.style.height = '${initHeight}%';
+    win.style.left = '${initX}${valueType}';
+    win.style.top = '${initY}${valueType}';
+    win.style.width = '${initWidth}${valueType}';
+    win.style.height = '${initHeight}${valueType}';
 
     this.closed = false;
     this.inMotion = false;
 
+    this.valueType = valueType;
+
     win.style.position = 'absolute';
-    win.onClick.listen((MouseEvent event) {
+    button.onClick.listen((MouseEvent event) {
       if (!inMotion) toggle();
     });
   }
@@ -167,16 +183,16 @@ class Window extends Animatable {
 
   void animate() {
     if (animationsX.isNotEmpty) {
-      win.style.left = '${animationsX.removeAt(0)}%';
+      win.style.left = '${animationsX.removeAt(0)}${valueType}';
     }
     if (animationsY.isNotEmpty) {
-      win.style.top = '${animationsY.removeAt(0)}%';
+      win.style.top = '${animationsY.removeAt(0)}${valueType}';
     }
     if (animationsWidth.isNotEmpty) {
-      win.style.width = '${animationsWidth.removeAt(0)}%';
+      win.style.width = '${animationsWidth.removeAt(0)}${valueType}';
     }
     if (animationsHeight.isNotEmpty) {
-      win.style.height = '${animationsHeight.removeAt(0)}%';
+      win.style.height = '${animationsHeight.removeAt(0)}${valueType}';
     }
   }
 
@@ -201,7 +217,8 @@ class Tween {
     return animation;
   }
 
-  static List<double> sinusoidal(int initVal, int finalVal, int fps, double dur) {
+  static List<double> sinusoidal(
+      int initVal, int finalVal, int fps, double dur) {
     List<double> animation = [];
     int delta = finalVal - initVal;
     int frames = (fps * dur).round();

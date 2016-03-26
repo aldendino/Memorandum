@@ -1,11 +1,15 @@
 /* Dropdown Menu */
-
+/*
 nav ul ul {
     display: none;
 }
 
 nav ul li:hover > ul {
     display: block;
+}
+*/
+nav {
+    height: 50px;
 }
 
 nav ul {
@@ -15,6 +19,7 @@ nav ul {
     list-style: none;
     position: relative;
     display: inline-table;
+    height: 100%;
 }
 nav ul:after {
     content: "";
